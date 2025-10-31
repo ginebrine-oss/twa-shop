@@ -31,6 +31,16 @@ tg.MainButton.onClick(showCartSummary);
 
 // --- 3. ФУНКЦІЇ НАВІГАЦІЇ ТА ВІДОБРАЖЕННЯ ---
 
+// Overlay (опціонально)
+function showOverlay() {
+    const overlay = document.getElementById('pageOverlay');
+    if (overlay) overlay.classList.add('show');
+}
+function hideOverlay() {
+    const overlay = document.getElementById('pageOverlay');
+    if (overlay) overlay.classList.remove('show');
+}
+
 async function loadCategories() {
     currentView = 'categories';
     showLoader();
@@ -378,6 +388,7 @@ function showLoader() {
         <div class="loader fade-in">⏳ Завантаження...</div>
     `;
 }
+
 
 
 
