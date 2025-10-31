@@ -373,5 +373,12 @@ function showScreen(screenName) {
     // Головну кнопку ховаємо лише коли це не cart/order
     if (screenName !== 'none') tg.MainButton.hide();
 }
+function showLoader() {
+    appContainer.innerHTML = `
+        <div class="loader fade-in">⏳ Завантаження...</div>
+    `;
+}
+
+
 
 
