@@ -1,4 +1,6 @@
-/* Використовуємо кольори теми Telegram */
+/* ===========================
+   Theme + animation variables
+   =========================== */
 :root {
     --bg-color: var(--tg-theme-bg-color, #ffffff);
     --text-color: var(--tg-theme-text-color, #000000);
@@ -7,8 +9,25 @@
     --btn-color: var(--tg-theme-button-color, #007aff);
     --btn-text-color: var(--tg-theme-button-text-color, #ffffff);
     --secondary-bg-color: var(--tg-theme-secondary-bg-color, #f0f0f0);
+
+    /* animation tokens */
+    --anim-duration-short: 160ms;
+    --anim-duration: 320ms;
+    --anim-duration-long: 520ms;
+    --anim-ease: cubic-bezier(.22,.9,.36,1); /* smooth */
+    --elev-shadow: 0 8px 20px rgba(2,6,23,0.08);
 }
 
+/* Respect reduced motion */
+@media (prefers-reduced-motion: reduce) {
+    :root {
+        --anim-duration-short: 0ms;
+        --anim-duration: 0ms;
+        --anim-duration-long: 0ms;
+    }
+}
+
+/* Base page */
 body {
     font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
     margin: 0;
@@ -16,26 +35,62 @@ body {
     background-color: var(--bg-color);
     color: var(--text-color);
     overscroll-behavior: none; /* Забороняє "відтягування" сторінки */
+    /* subtle fade-in for initial load */
+    animation: page-fade-in var(--anim-duration) var(--anim-ease) both;
 }
 
+@keyframes page-fade-in {
+    from { opacity: 0; transform: translateY(6px); }
+    to   { opacity: 1; transform: translateY(0); }
+}
+
+/* Hidden utility */
 .hidden {
     display: none !important;
 }
 
+/* App containers */
 #app, #order-form-container {
     display: flex;
     flex-direction: column;
     gap: 12px;
 }
 
-/* Сітка для категорій та товарів */
+/* ======================
+   Grid and stagger show
+   ====================== */
 .grid-container {
     display: grid;
-    grid-template-columns: 1fr 1fr; /* Дві колонки */
+    grid-template-columns: 1fr 1fr;
     gap: 10px;
+    /* helper for staggered children: */
+    --stagger-step: 60ms;
 }
 
-/* Кнопка категорії */
+.grid-container > * {
+    /* default each item will fade/slide in */
+    transform-origin: center;
+    animation: item-appear var(--anim-duration) var(--anim-ease) both;
+}
+
+/* If you want stagger effect: set inline style or JS to set animation-delay per child,
+   or use nth-child fallback for small lists below */
+@keyframes item-appear {
+    from { opacity: 0; transform: translateY(8px) scale(.995); }
+    to   { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+/* Small nth-child fallback (for first 6 children) */
+.grid-container > :nth-child(1){ animation-delay: calc(var(--stagger-step) * 0); }
+.grid-container > :nth-child(2){ animation-delay: calc(var(--stagger-step) * 1); }
+.grid-container > :nth-child(3){ animation-delay: calc(var(--stagger-step) * 2); }
+.grid-container > :nth-child(4){ animation-delay: calc(var(--stagger-step) * 3); }
+.grid-container > :nth-child(5){ animation-delay: calc(var(--stagger-step) * 4); }
+.grid-container > :nth-child(6){ animation-delay: calc(var(--stagger-step) * 5); }
+
+/* ======================
+   Category button
+   ====================== */
 .category-btn {
     padding: 20px 10px;
     background-color: var(--secondary-bg-color);
@@ -43,30 +98,59 @@ body {
     text-align: center;
     font-weight: 500;
     cursor: pointer;
+    transition: transform var(--anim-duration) var(--anim-ease), box-shadow var(--anim-duration) var(--anim-ease);
+    will-change: transform;
 }
 
-/* Картка товару */
+.category-btn:hover,
+.category-btn:focus {
+    transform: translateY(-4px) scale(1.01);
+    box-shadow: var(--elev-shadow);
+}
+
+/* ======================
+   Product card
+   ====================== */
 .product-card {
     background-color: var(--secondary-bg-color);
     border-radius: 8px;
     overflow: hidden;
     display: flex;
     flex-direction: column;
+    transition: transform var(--anim-duration) var(--anim-ease), box-shadow var(--anim-duration) var(--anim-ease);
+    will-change: transform;
+    cursor: default;
 }
 
+.product-card:focus-within,
+.product-card:hover {
+    transform: translateY(-6px);
+    box-shadow: var(--elev-shadow);
+}
+
+/* Image */
 .product-card img {
     width: 100%;
     height: 120px;
     object-fit: cover;
     background-color: #ffffff;
+    transition: transform var(--anim-duration-long) var(--anim-ease), filter var(--anim-duration) var(--anim-ease);
 }
 
+/* subtle zoom on hover */
+.product-card:hover img {
+    transform: scale(1.03);
+    filter: saturate(1.03);
+}
+
+/* Product info */
 .product-info {
     padding: 10px;
     flex-grow: 1;
     display: flex;
     flex-direction: column;
     gap: 5px;
+    transition: color var(--anim-duration) var(--anim-ease);
 }
 
 .product-name {
@@ -84,6 +168,7 @@ body {
     color: var(--hint-color);
 }
 
+/* Add-to-cart button */
 .btn-add-to-cart {
     width: 100%;
     padding: 10px;
@@ -93,14 +178,33 @@ body {
     border-radius: 6px;
     font-weight: 600;
     cursor: pointer;
+    transition: transform var(--anim-duration-short) var(--anim-ease), box-shadow var(--anim-duration) var(--anim-ease), opacity var(--anim-duration) var(--anim-ease);
+    will-change: transform;
+}
+
+.btn-add-to-cart:active {
+    transform: scale(.98);
 }
 
 .btn-add-to-cart:disabled {
     background-color: var(--hint-color);
     cursor: not-allowed;
+    opacity: 0.85;
 }
 
-/* Елементи керування (кнопки Назад, Кошик) */
+/* Small "add to cart" visual feedback (pulse) */
+.btn-add-to-cart.pulse {
+    animation: pulse-add var(--anim-duration-short) forwards;
+}
+@keyframes pulse-add {
+    0% { transform: scale(1); box-shadow: none; }
+    50% { transform: scale(1.04); box-shadow: 0 6px 18px rgba(0,0,0,0.08); }
+    100% { transform: scale(1); box-shadow: none;}
+}
+
+/* ======================
+   Controls (Back, Cart)
+   ====================== */
 .controls {
     display: flex;
     gap: 10px;
@@ -114,13 +218,28 @@ body {
     border-radius: 8px;
     font-weight: 500;
     cursor: pointer;
+    transition: transform var(--anim-duration) var(--anim-ease), box-shadow var(--anim-duration) var(--anim-ease);
 }
 
-/* Форма замовлення */
+.btn-back:hover, .btn-secondary:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 8px 18px rgba(2,6,23,0.06);
+}
+
+/* ======================
+   Order form
+   ====================== */
 #order-form {
     display: flex;
     flex-direction: column;
     gap: 12px;
+    /* subtle entrance */
+    animation: form-appear var(--anim-duration) var(--anim-ease) both;
+}
+
+@keyframes form-appear {
+    from { opacity: 0; transform: translateY(8px); }
+    to   { opacity: 1; transform: translateY(0); }
 }
 
 #order-form label {
@@ -136,8 +255,16 @@ body {
     background-color: var(--bg-color);
     color: var(--text-color);
     font-size: 1em;
+    transition: box-shadow var(--anim-duration) var(--anim-ease), border-color var(--anim-duration) var(--anim-ease);
 }
 
+#order-form input:focus {
+    outline: none;
+    box-shadow: 0 6px 18px rgba(0,122,255,0.08);
+    border-color: rgba(0,122,255,0.18);
+}
+
+/* Confirm button */
 .btn-confirm {
     padding: 15px;
     background-color: var(--btn-color);
@@ -147,13 +274,96 @@ body {
     font-weight: 600;
     cursor: pointer;
     font-size: 1.1em;
-
+    transition: transform var(--anim-duration-short) var(--anim-ease), box-shadow var(--anim-duration) var(--anim-ease);
 }
 
+.btn-confirm:active {
+    transform: translateY(1px) scale(.997);
+}
+
+/* ======================
+   Profile box
+   ====================== */
 .profile-box {
     background-color: var(--secondary-bg-color);
     padding: 15px;
     border-radius: 8px;
     line-height: 1.5;
     font-size: 0.95em;
+    transition: transform var(--anim-duration) var(--anim-ease), box-shadow var(--anim-duration) var(--anim-ease);
+}
+
+.profile-box:hover {
+    transform: translateY(-4px);
+    box-shadow: var(--elev-shadow);
+}
+
+/* ======================
+   Page / route transitions
+   ====================== */
+/* For SPA: you can add/remove .route-enter / .route-exit classes to the root page container */
+.route-enter {
+    opacity: 0;
+    transform: translateY(8px);
+}
+.route-enter.route-enter-active {
+    animation: route-in var(--anim-duration) var(--anim-ease) both;
+}
+@keyframes route-in {
+    from { opacity: 0; transform: translateY(8px); }
+    to   { opacity: 1; transform: translateY(0); }
+}
+
+.route-exit {
+    opacity: 1;
+    transform: translateY(0);
+}
+.route-exit.route-exit-active {
+    animation: route-out var(--anim-duration) var(--anim-ease) both;
+}
+@keyframes route-out {
+    from { opacity: 1; transform: translateY(0); }
+    to   { opacity: 0; transform: translateY(-6px); }
+}
+
+/* ======================
+   Simple preloader overlay (MPA)
+   ====================== */
+.page-overlay {
+    position: fixed;
+    inset: 0;
+    background: linear-gradient(180deg, rgba(255,255,255,0.85), rgba(255,255,255,0.95));
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 1200;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity var(--anim-duration) var(--anim-ease);
+}
+.page-overlay.show {
+    opacity: 1;
+    pointer-events: auto;
+}
+
+/* small spinner (CSS) */
+.spinner {
+    width: 44px;
+    height: 44px;
+    border-radius: 50%;
+    border: 4px solid rgba(0,0,0,0.08);
+    border-top-color: var(--btn-color);
+    animation: spin 900ms linear infinite;
+}
+@keyframes spin { to { transform: rotate(360deg); } }
+
+/* ======================
+   Accessibility / fallback
+   ====================== */
+@media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after {
+        animation-duration: 0ms !important;
+        transition-duration: 0ms !important;
+        animation-iteration-count: 1 !important;
+    }
 }
