@@ -281,15 +281,35 @@ confirmNewDataBtn.onclick = showOrderForm;
 
 // Крок 3 (Гілка C): Юзер заповнює пусту форму
 orderForm.onsubmit = (e) => {
-    e.preventDefault();
-    const clientDetails = {
-        telegram_id: tg.initDataUnsafe?.user?.id || null,
-        name: document.getElementById('name').value,
-        phone: document.getElementById('phone').value,
-        address: document.getElementById('address').value,
-        delivery_time: document.getElementById('delivery_time').value || 'Якнайшвидше'
-    };
-    submitOrder(clientDetails);
+    e.preventDefault();
+
+    // --- ПОЧАТОК НОВОГО БЛОКУ ВАЛІДАЦІЇ ---
+    const name = document.getElementById('name').value.trim();
+    const phone = document.getElementById('phone').value.trim();
+    const address = document.getElementById('address').value.trim();
+
+    if (!name) {
+        tg.showAlert("Будь ласка, введіть Ваше ПІБ.");
+        return;
+    }
+    if (!phone) {
+        tg.showAlert("Будь ласка, введіть Ваш телефон.");
+        return;
+    }
+    if (!address) {
+        tg.showAlert("Будь ласка, введіть Вашу адресу.");
+        return;
+    }
+    // --- КІНЕЦЬ НОВОГО БЛОКУ ВАЛІДАЦІЇ ---
+
+    const clientDetails = {
+        telegram_id: tg.initDataUnsafe?.user?.id || null,
+        name: name, // Використовуємо очищені змінні
+        phone: phone, // Використовуємо очищені змінні
+        address: address, // Використовуємо очищені змінні
+        delivery_time: document.getElementById('delivery_time').value || 'Якнайшвидше'
+    };
+    submitOrder(clientDetails);
 };
 
 // Крок 3 (Назад): Повернення з форми до кошика
@@ -388,6 +408,7 @@ function showLoader() {
         <div class="loader fade-in">⏳ Завантаження...</div>
     `;
 }
+
 
 
 
