@@ -204,7 +204,7 @@ function showCartSummary() {
     }
 }
 
-// --- 5. ЛОГІКА ОФОРМЛЕННЯ ЗАМОВЛЕННЯ (ОНОВЛЕНО) ---
+// --- 5. ЛОГІКА ОФОРМЛЕННЯ ЗАМОВЛЕННЯ ---
 
 // Крок 1: Вирішуємо, який екран показати (форму чи профіль)
 async function startCheckout() {
@@ -301,46 +301,40 @@ async function submitOrder(clientDetails) {
     };
 
     try {
-    // 1. Готуємо Головну Кнопку до відправки
-    tg.MainButton.setText("Обробка...");
-    tg.MainButton.showProgress(true);
-    tg.MainButton.disable();
+        // 1. Готуємо Головну Кнопку до відправки
+        tg.MainButton.setText("Обробка...");
+        tg.MainButton.showProgress(true);
+        tg.MainButton.disable();
 
-    // 2. **ГОЛОВНИЙ КРОК: Відправка даних боту**
-    // Ця команда АСИНХРОННА. 
-    // Ми НЕ будемо закривати вікно.
-    tg.sendData(JSON.stringify(orderData));
+        // 2. **ГОЛОВНИЙ КРОК: Відправка даних боту**
+        tg.sendData(JSON.stringify(orderData));
 
-    // 3. **НАДАЄМО ВІДГУК КОРИСТУВАЧУ ТУТ**
-    // Ховаємо всі екрани
-    showScreen('none'); 
+        // 3. **НАДАЄМО ВІДГУК КОРИСТУВАЧУ ТУТ**
+        showScreen('none'); 
+        
+        appContainer.classList.remove('hidden');
+        appContainer.innerHTML = `
+            <h2>✅ Дякуємо!</h2>
+            <p>Ваше замовлення успішно надіслано в обробку.</p>
+            <p>Ви отримаєте підтвердження від бота в чаті за мить.</p>
+            <p>Ви можете закрити цей екран.</p>
+        `;
 
-    // Показуємо повідомлення про успіх
-    appContainer.classList.remove('hidden');
-    appContainer.innerHTML = `
-        <h2>✅ Дякуємо!</h2>
-        <p>Ваше замовлення успішно надіслано в обробку.</p>
-        <p>Ви отримаєте підтвердження від бота в чаті за мить.</p>
-        <p>Ви можете закрити цей екран.</p>
-    `;
+        // 4. Повідомляємо Telegram, що все добре
+        tg.HapticFeedback.notificationOccurred('success');
+        
+        // Через 3 секунди можна закрити TWA
+        setTimeout(() => tg.close(), 3000);
 
-    // 4. Повідомляємо Telegram, що все добре,
-    // і він може закрити вікно
-    tg.HapticFeedback.notificationOccurred('success');
-
-    // Через 3 секунди можна закрити TWA, 
-    // щоб користувач побачив повідомлення від бота.
-    setTimeout(() => tg.close(), 3000);
-
-} catch (error) {
-    console.error("Помилка відправки замовлення: ", error);
-    tg.showAlert("Сталася помилка. Спробуйте ще раз.");
-
-    // Повертаємо кнопку в робочий стан
-    tg.MainButton.setText("Помилка! Спробувати ще раз");
-    tg.MainButton.hideProgress(false);
-    tg.MainButton.enable();
-}
+    } catch (error) {
+        console.error("Помилка відправки замовлення: ", error);
+        tg.showAlert("Сталася помилка. Спробуйте ще раз.");
+        
+        // Повертаємо кнопку в робочий стан
+        tg.MainButton.setText("Помилка! Спробувати ще раз");
+        tg.MainButton.hideProgress(false);
+        tg.MainButton.enable();
+    }
 }
 
 // --- 6. ДОПОМІЖНІ ФУНКЦІЇ ---
@@ -352,8 +346,11 @@ function showScreen(screenName) {
     profileConfirmContainer.classList.add('hidden');
     tg.MainButton.hide();
 
-    if (screenName === 'none') { // <-- ДОДАЙТЕ ЦЕЙ РЯДОК
+    if (screenName === 'none') {
         return; // Просто все ховаємо
+    } else if (screenName === 'app') {
+        appContainer.classList.remove('hidden');
+        updateMainButton(); // Головна кнопка керується в 'app'
     } else if (screenName === 'order') {
         orderFormContainer.classList.remove('hidden');
     } else if (screenName === 'profile') {
@@ -368,5 +365,3 @@ function showLoader() {
 function showError(message) {
     appContainer.innerHTML = `<div class="error">${message}</div>`;
 }
-
-
