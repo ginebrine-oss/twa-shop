@@ -8,11 +8,11 @@
 </head>
 <body>
     
-    <div id="app">
-        <div class="loader">Завантаження...</div>
+    <div id="app" class="screen">
+       <div class="loader">Завантаження...</div>
     </div>
 
-    <div id="order-form-container" class="hidden">
+    <div id="order-form-container" class="screen hidden">
         <h2>📝 Оформлення замовлення</h2>
         <form id="order-form">
             <label for="name">Ваше ПІБ:</label>
@@ -31,7 +31,7 @@
             <button type="button" id="back-to-cart-btn" class="btn-secondary">Назад до кошика</button>
         </form>
     </div>
-    <div id="profile-confirm-container" class="hidden">
+    <div id="profile-confirm-container" class="screen hidden">
     <h2>👤 Підтвердіть дані</h2>
     <div id="profile-data-display" class="profile-box">
         </div>
@@ -42,9 +42,14 @@
     <button id="confirm-use-profile" class="btn-confirm">✅ Використати ці дані</button>
     <button id="confirm-new-data" class="btn-secondary">📝 Ввести нові дані</button>
 </div>
+<!-- Overlay для плавних переходів / лоадера -->
+<div class="page-overlay" id="pageOverlay" aria-hidden="true" style="display:none;">
+  <div class="spinner" role="status" aria-label="Завантаження"></div>
+</div>
 
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
     <script src="app.js"></script>
 </body>
 
 </html>
+
