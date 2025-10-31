@@ -1,36 +1,36 @@
 // --- 1. НАЛАШТУВАННЯ ---
-
-// URL вашого API, який ми налаштували на Nginx
 const API_URL = "https://zhadkivski-shop.servegame.com";
-// URL для статичних файлів (фото)
 const STATIC_URL = `${API_URL}/static/`;
-
-// Ініціалізуємо Telegram Web App
 const tg = window.Telegram.WebApp;
 
-// Отримуємо головні елементи зі сторінки
+// --- Елементи сторінки ---
 const appContainer = document.getElementById('app');
+// Форма для нового клієнта
 const orderFormContainer = document.getElementById('order-form-container');
 const orderForm = document.getElementById('order-form');
+// Форма для існуючого клієнта (нова)
+const profileConfirmContainer = document.getElementById('profile-confirm-container');
+const profileDataDisplay = document.getElementById('profile-data-display');
+const deliveryTimeProfileInput = document.getElementById('delivery_time_profile');
+const confirmUseProfileBtn = document.getElementById('confirm-use-profile');
+const confirmNewDataBtn = document.getElementById('confirm-new-data');
+const backToCartBtn = document.getElementById('back-to-cart-btn');
 
-// Глобальні змінні
-let cart = {}; // Наш кошик { product_id: quantity }
-let productsCache = {}; // Кеш товарів, щоб не завантажувати їх знову
-let currentView = 'categories'; // Поточний екран ('categories', 'products', 'cart')
+// --- Глобальні змінні ---
+let cart = {}; 
+let productsCache = {};
+let userProfile = {}; // Зберігаємо профіль користувача тут
+let currentView = 'categories';
 
 // --- 2. ГОЛОВНА ЛОГІКА (ЗАПУСК) ---
-
-// Запускаємо головну функцію, коли TWA готовий
 tg.ready();
 loadCategories();
 
-// Налаштовуємо Головну Кнопку Telegram
 tg.MainButton.setText("🛒 Переглянути кошик");
 tg.MainButton.onClick(showCartSummary);
 
 // --- 3. ФУНКЦІЇ НАВІГАЦІЇ ТА ВІДОБРАЖЕННЯ ---
 
-// Завантажує та показує категорії
 async function loadCategories() {
     currentView = 'categories';
     showLoader();
@@ -42,22 +42,26 @@ async function loadCategories() {
         const grid = document.createElement('div');
         grid.className = 'grid-container';
 
-        categories.forEach(([id, name]) => {
-            grid.innerHTML += `
-                <div class="category-btn" onclick="loadProducts(${id})">
-                    ${name}
-                </div>
-            `;
-        });
+        if (!categories || categories.length === 0) {
+            grid.innerHTML = "<p>Категорій поки що немає.</p>";
+        } else {
+            categories.forEach(([id, name]) => {
+                grid.innerHTML += `
+                    <div class="category-btn" onclick="loadProducts(${id})">
+                        ${name}
+                    </div>
+                `;
+            });
+        }
         appContainer.appendChild(grid);
     } catch (e) {
         showError("Помилка завантаження категорій.");
         console.error(e);
     }
+    showScreen('app');
     updateMainButton();
 }
 
-// Завантажує та показує товари
 async function loadProducts(categoryId) {
     currentView = 'products';
     showLoader();
@@ -74,70 +78,68 @@ async function loadProducts(categoryId) {
         const grid = document.createElement('div');
         grid.className = 'grid-container';
 
-        if (products.length === 0) {
+        if (!products || products.length === 0) {
             grid.innerHTML = "<p>В цій категорії товарів немає.</p>";
-        }
-
-        products.forEach(prod => {
-            // Зберігаємо товар у кеш
-            productsCache[prod.id] = prod; 
-            
-            const photoUrl = prod.photo_url ? `${STATIC_URL}${prod.photo_url}` : 'https://via.placeholder.com/150'; // Заглушка, якщо фото немає
-            const inStock = prod.stock > 0;
-            
-            grid.innerHTML += `
-                <div class="product-card">
-                    <img src="${photoUrl}" alt="${prod.name}">
-                    <div class="product-info">
-                        <div class="product-name">${prod.name}</div>
-                        <div class="product-price">${prod.price} грн</div>
-                        <div class="product-stock">${inStock ? `В наявності: ${prod.stock} шт.` : 'Немає в наявності'}</div>
-                        <button class="btn-add-to-cart" id="btn-prod-${prod.id}" 
-                                onclick="addToCart(${prod.id})" ${!inStock ? 'disabled' : ''}>
-                            ${!inStock ? 'Немає' : 'Додати в кошик'}
-                        </button>
+        } else {
+            products.forEach(prod => {
+                productsCache[prod.id] = prod; 
+                const photoUrl = prod.photo_url ? `${STATIC_URL}${prod.photo_url}` : 'https://via.placeholder.com/150';
+                const inStock = prod.stock > 0;
+                
+                grid.innerHTML += `
+                    <div class="product-card">
+                        <img src="${photoUrl}" alt="${prod.name}">
+                        <div class="product-info">
+                            <div class="product-name">${prod.name}</div>
+                            <div class="product-price">${prod.price} грн</div>
+                            <div class="product-stock">${inStock ? `В наявності: ${prod.stock} шт.` : 'Немає в наявності'}</div>
+                            <button class="btn-add-to-cart" id="btn-prod-${prod.id}" 
+                                    onclick="addToCart(${prod.id})" ${!inStock ? 'disabled' : ''}>
+                                ${cart[prod.id] ? `У кошику: ${cart[prod.id]}` : (inStock ? 'Додати в кошик' : 'Немає')}
+                            </button>
+                        </div>
                     </div>
-                </div>
-            `;
-        });
+                `;
+            });
+        }
         appContainer.appendChild(grid);
     } catch (e) {
         showError("Помилка завантаження товарів.");
         console.error(e);
     }
+    showScreen('app');
     updateMainButton();
 }
 
 // --- 4. ЛОГІКА КОШИКА ---
 
-// Додає товар у кошик
 function addToCart(productId) {
     const product = productsCache[productId];
     if (!product) return;
 
     let quantityInCart = cart[productId] || 0;
 
-    // Перевірка залишків
     if (quantityInCart >= product.stock) {
         tg.showAlert(`Вибачте, але на складі маємо всього ${product.stock} шт 😢`);
         return;
     }
-
     cart[productId] = quantityInCart + 1;
-    
-    // Повідомлення про додавання
     tg.HapticFeedback.notificationOccurred('success');
     
-    // Оновлюємо кнопку
     const btn = document.getElementById(`btn-prod-${productId}`);
-    if (btn) {
-        btn.innerText = `У кошику: ${cart[productId]}`;
-    }
+    if (btn) btn.innerText = `У кошику: ${cart[productId]}`;
     
     updateMainButton();
 }
 
-// Оновлює вигляд та текст Головної Кнопки
+function removeFromCart(productId) {
+    if (cart[productId]) {
+        delete cart[productId];
+        tg.HapticFeedback.notificationOccurred('warning');
+        showCartSummary(); // Оновити вигляд кошика
+    }
+}
+
 function updateMainButton() {
     const totalItems = Object.values(cart).reduce((sum, qty) => sum + qty, 0);
 
@@ -153,15 +155,12 @@ function updateMainButton() {
     }
 }
 
-// Показує вміст кошика (нова "сторінка")
 function showCartSummary() {
     if (Object.keys(cart).length === 0) {
         tg.showAlert("Ваш кошик порожній.");
         return;
     }
 
-    // Якщо ми не на сторінці кошика, показуємо кошик
-    // Якщо ми ВЖЕ на сторінці кошика, показуємо форму замовлення
     if (currentView !== 'cart') {
         currentView = 'cart';
         showLoader();
@@ -173,7 +172,7 @@ function showCartSummary() {
         for (const productId in cart) {
             const product = productsCache[productId];
             const quantity = cart[productId];
-            if (!product) continue; // Товар не знайдено в кеші
+            if (!product) continue;
             
             const itemPrice = product.price * quantity;
             totalPrice += itemPrice;
@@ -191,61 +190,101 @@ function showCartSummary() {
         appContainer.appendChild(cartItemsContainer);
         appContainer.innerHTML += `<h3>Загальна сума: ${totalPrice} грн</h3>`;
         
-        // Кнопка "Назад"
         const backBtn = document.createElement('button');
         backBtn.className = 'btn-back';
-        backBtn.innerText = '⬅️ Назад до товарів';
-        backBtn.onclick = () => {
-             // Повертаємось до категорій, бо не знаємо, з якої саме категорії прийшов юзер
-            loadCategories();
-        };
+        backBtn.innerText = '⬅️ Назад до категорій';
+        backBtn.onclick = loadCategories;
         appContainer.prepend(backBtn);
         
+        showScreen('app');
         updateMainButton();
     } else {
         // Ми ВЖЕ в кошику, і юзер тисне "Перейти до оформлення"
-        showOrderForm();
+        startCheckout();
     }
 }
 
-// Видаляє товар з кошика (спрощено, можна додати +-)
-function removeFromCart(productId) {
-    if (cart[productId]) {
-        delete cart[productId];
-        tg.HapticFeedback.notificationOccurred('warning');
-        showCartSummary(); // Оновити вигляд кошика
+// --- 5. ЛОГІКА ОФОРМЛЕННЯ ЗАМОВЛЕННЯ (ОНОВЛЕНО) ---
+
+// Крок 1: Вирішуємо, який екран показати (форму чи профіль)
+async function startCheckout() {
+    const userId = tg.initDataUnsafe?.user?.id;
+    
+    if (!userId) {
+        showOrderForm(); // Якщо не можемо отримати ID, показуємо пусту форму
+        return;
+    }
+
+    try {
+        const response = await fetch(`${API_URL}/api/profile/${userId}`);
+        const profile = await response.json();
+        
+        if (profile && profile.name) {
+            userProfile = profile; // Зберігаємо профіль
+            showProfileConfirm(profile); // Показуємо екран підтвердження
+        } else {
+            showOrderForm(); // Профілю немає, показуємо пусту форму
+        }
+    } catch (e) {
+        console.error("Помилка завантаження профілю:", e);
+        tg.showAlert("Помилка завантаження профілю. Спробуйте ще раз.");
     }
 }
 
-// --- 5. ЛОГІКА ОФОРМЛЕННЯ ЗАМОВЛЕННЯ ---
+// Крок 2 (Гілка A): Показати екран підтвердження
+function showProfileConfirm(profile) {
+    currentView = 'profile';
+    profileDataDisplay.innerHTML = `
+        <p><strong>ПІБ:</strong> ${profile.name}</p>
+        <p><strong>Телефон:</strong> ${profile.phone}</p>
+        <p><strong>Адреса:</strong> ${profile.address}</p>
+    `;
+    showScreen('profile');
+}
 
-// Показує форму оформлення
+// Крок 2 (Гілка B): Показати пусту форму
 function showOrderForm() {
     currentView = 'order';
-    appContainer.classList.add('hidden'); // Ховаємо каталог
-    orderFormContainer.classList.remove('hidden'); // Показуємо форму
-    tg.MainButton.hide(); // Ховаємо головну кнопку, поки юзер заповнює форму
-
-    // Спробуємо автозаповнити дані з Telegram
+    // Автозаповнення імені, якщо воно є в Telegram
     const user = tg.initDataUnsafe?.user;
-    if (user) {
+    if (user && !document.getElementById('name').value) {
         document.getElementById('name').value = `${user.first_name || ''} ${user.last_name || ''}`.trim();
     }
+    showScreen('order');
 }
 
-// Обробник натискання кнопки "Назад" у формі
-document.getElementById('back-to-cart-btn').onclick = () => {
-    orderFormContainer.classList.add('hidden'); // Ховаємо форму
-    appContainer.classList.remove('hidden'); // Показуємо кошик
+// Крок 3 (Гілка A): Юзер тисне "Використати ці дані"
+confirmUseProfileBtn.onclick = () => {
+    const deliveryTime = deliveryTimeProfileInput.value || 'Якнайшвидше';
+    const clientDetails = { ...userProfile, delivery_time: deliveryTime };
+    submitOrder(clientDetails);
+};
+
+// Крок 3 (Гілка B): Юзер тисне "Ввести нові дані"
+confirmNewDataBtn.onclick = showOrderForm;
+
+// Крок 3 (Гілка C): Юзер заповнює пусту форму
+orderForm.onsubmit = (e) => {
+    e.preventDefault();
+    const clientDetails = {
+        telegram_id: tg.initDataUnsafe?.user?.id || null,
+        name: document.getElementById('name').value,
+        phone: document.getElementById('phone').value,
+        address: document.getElementById('address').value,
+        delivery_time: document.getElementById('delivery_time').value || 'Якнайшвидше'
+    };
+    submitOrder(clientDetails);
+};
+
+// Крок 3 (Назад): Повернення з форми до кошика
+backToCartBtn.onclick = () => {
+    showScreen('app');
     currentView = 'cart';
     updateMainButton();
 };
 
-// Обробник відправки форми
-orderForm.onsubmit = async (e) => {
-    e.preventDefault(); // Забороняємо стандартну відправку форми
-    
-    // Збираємо дані замовлення
+// Крок 4: Фінальна відправка замовлення (спільна для обох гілок)
+async function submitOrder(clientDetails) {
     let totalPrice = 0;
     for (const productId in cart) {
         const product = productsCache[productId];
@@ -255,14 +294,6 @@ orderForm.onsubmit = async (e) => {
         }
     }
     
-    const clientDetails = {
-        telegram_id: tg.initDataUnsafe?.user?.id || null,
-        name: document.getElementById('name').value,
-        phone: document.getElementById('phone').value,
-        address: document.getElementById('address').value,
-        delivery_time: document.getElementById('delivery_time').value || 'Якнайшвидше'
-    };
-    
     const orderData = {
         cart: cart,
         client_details: clientDetails,
@@ -270,35 +301,43 @@ orderForm.onsubmit = async (e) => {
     };
 
     try {
-        // Готуємо Головну Кнопку до відправки
         tg.MainButton.setText("Обробка...");
         tg.MainButton.showProgress(true);
         tg.MainButton.disable();
 
-        // **ГОЛОВНИЙ КРОК: Відправка даних боту**
-        // Ваш backend (`web_app_data_handler`) отримає цей JSON
+        // Відправка даних боту
         tg.sendData(JSON.stringify(orderData));
-
-        // tg.sendData() не дає відповіді, успіх чи ні.
-        // Бот має відповісти юзеру повідомленням.
-        // Ми просто закриваємо TWA після відправки.
         
-        // tg.close() буде викликано після того, як бот отримає дані
-        // (Але для надійності закриємо через 1 сек, якщо sendData не закриє)
+        // Бот надішле повідомлення про успіх, ми просто закриваємо TWA
         setTimeout(() => tg.close(), 1000);
 
     } catch (error) {
         console.error("Помилка відправки замовлення: ", error);
         tg.showAlert("Сталася помилка. Спробуйте ще раз.");
-        // Повертаємо кнопку в робочий стан
         tg.MainButton.setText("Помилка! Спробувати ще раз");
         tg.MainButton.hideProgress(false);
         tg.MainButton.enable();
     }
-};
-
+}
 
 // --- 6. ДОПОМІЖНІ ФУНКЦІЇ ---
+
+// Керує видимістю екранів
+function showScreen(screenName) {
+    appContainer.classList.add('hidden');
+    orderFormContainer.classList.add('hidden');
+    profileConfirmContainer.classList.add('hidden');
+    tg.MainButton.hide();
+
+    if (screenName === 'app') {
+        appContainer.classList.remove('hidden');
+        updateMainButton(); // Головна кнопка керується в 'app'
+    } else if (screenName === 'order') {
+        orderFormContainer.classList.remove('hidden');
+    } else if (screenName === 'profile') {
+        profileConfirmContainer.classList.remove('hidden');
+    }
+}
 
 function showLoader() {
     appContainer.innerHTML = '<div class="loader">Завантаження...</div>';
