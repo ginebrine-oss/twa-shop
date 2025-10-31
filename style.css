@@ -366,4 +366,18 @@ body {
         transition-duration: 0ms !important;
         animation-iteration-count: 1 !important;
     }
+   .loader {
+    text-align: center;
+    font-weight: 500;
+    padding: 40px 0;
+    color: var(--hint-color);
+    opacity: 0;
+    transition: opacity 0.4s ease;
 }
+
+.loader.fade-in {
+    opacity: 1;
+}
+
+}
+
