@@ -147,4 +147,13 @@ body {
     font-weight: 600;
     cursor: pointer;
     font-size: 1.1em;
+
+}
+
+.profile-box {
+    background-color: var(--secondary-bg-color);
+    padding: 15px;
+    border-radius: 8px;
+    line-height: 1.5;
+    font-size: 0.95em;
 }
