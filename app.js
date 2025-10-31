@@ -301,23 +301,46 @@ async function submitOrder(clientDetails) {
     };
 
     try {
-        tg.MainButton.setText("Обробка...");
-        tg.MainButton.showProgress(true);
-        tg.MainButton.disable();
+    // 1. Готуємо Головну Кнопку до відправки
+    tg.MainButton.setText("Обробка...");
+    tg.MainButton.showProgress(true);
+    tg.MainButton.disable();
 
-        // Відправка даних боту
-        tg.sendData(JSON.stringify(orderData));
-        
-        // Бот надішле повідомлення про успіх, ми просто закриваємо TWA
-        setTimeout(() => tg.close(), 1000);
+    // 2. **ГОЛОВНИЙ КРОК: Відправка даних боту**
+    // Ця команда АСИНХРОННА. 
+    // Ми НЕ будемо закривати вікно.
+    tg.sendData(JSON.stringify(orderData));
 
-    } catch (error) {
-        console.error("Помилка відправки замовлення: ", error);
-        tg.showAlert("Сталася помилка. Спробуйте ще раз.");
-        tg.MainButton.setText("Помилка! Спробувати ще раз");
-        tg.MainButton.hideProgress(false);
-        tg.MainButton.enable();
-    }
+    // 3. **НАДАЄМО ВІДГУК КОРИСТУВАЧУ ТУТ**
+    // Ховаємо всі екрани
+    showScreen('none'); 
+
+    // Показуємо повідомлення про успіх
+    appContainer.classList.remove('hidden');
+    appContainer.innerHTML = `
+        <h2>✅ Дякуємо!</h2>
+        <p>Ваше замовлення успішно надіслано в обробку.</p>
+        <p>Ви отримаєте підтвердження від бота в чаті за мить.</p>
+        <p>Ви можете закрити цей екран.</p>
+    `;
+
+    // 4. Повідомляємо Telegram, що все добре,
+    // і він може закрити вікно
+    tg.HapticFeedback.notificationOccurred('success');
+
+    // Через 3 секунди можна закрити TWA, 
+    // щоб користувач побачив повідомлення від бота.
+    setTimeout(() => tg.close(), 3000);
+
+} catch (error) {
+    console.error("Помилка відправки замовлення: ", error);
+    tg.showAlert("Сталася помилка. Спробуйте ще раз.");
+
+    // Повертаємо кнопку в робочий стан
+    tg.MainButton.setText("Помилка! Спробувати ще раз");
+    tg.MainButton.hideProgress(false);
+    tg.MainButton.enable();
+}
 }
 
 // --- 6. ДОПОМІЖНІ ФУНКЦІЇ ---
@@ -346,3 +369,4 @@ function showLoader() {
 function showError(message) {
     appContainer.innerHTML = `<div class="error">${message}</div>`;
 }
+
