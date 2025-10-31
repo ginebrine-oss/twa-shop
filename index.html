@@ -31,9 +31,20 @@
             <button type="button" id="back-to-cart-btn" class="btn-secondary">Назад до кошика</button>
         </form>
     </div>
+    <div id="profile-confirm-container" class="hidden">
+    <h2>👤 Підтвердіть дані</h2>
+    <div id="profile-data-display" class="profile-box">
+        </div>
 
+    <label for="delivery_time_profile">Бажаний час доставки (для профілю):</label>
+    <input type="text" id="delivery_time_profile" placeholder="Наприклад: завтра, 14:00">
+
+    <button id="confirm-use-profile" class="btn-confirm">✅ Використати ці дані</button>
+    <button id="confirm-new-data" class="btn-secondary">📝 Ввести нові дані</button>
+</div>
 
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
     <script src="app.js"></script>
 </body>
+
 </html>
