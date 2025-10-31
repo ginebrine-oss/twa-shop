@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>Магазин</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    
+    <div id="app">
+        <div class="loader">Завантаження...</div>
+    </div>
+
+    <div id="order-form-container" class="hidden">
+        <h2>📝 Оформлення замовлення</h2>
+        <form id="order-form">
+            <label for="name">Ваше ПІБ:</label>
+            <input type="text" id="name" required>
+            
+            <label for="phone">Ваш телефон:</label>
+            <input type="tel" id="phone" required>
+            
+            <label for="address">Адреса доставки:</label>
+            <input type="text" id="address" required>
+            
+            <label for="delivery_time">Бажаний час доставки:</label>
+            <input type="text" id="delivery_time">
+            
+            <button type="submit" class="btn-confirm">Підтвердити замовлення</button>
+            <button type="button" id="back-to-cart-btn" class="btn-secondary">Назад до кошика</button>
+        </form>
+    </div>
+
+
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
+    <script src="app.js"></script>
+</body>
+</html>
