@@ -127,10 +127,16 @@ function addToCart(productId) {
     tg.HapticFeedback.notificationOccurred('success');
     
     const btn = document.getElementById(`btn-prod-${productId}`);
-    if (btn) btn.innerText = `У кошику: ${cart[productId]}`;
-    
+    if (btn) {
+        btn.innerText = `У кошику: ${cart[productId]}`;
+        // 🔹 Додаємо коротку анімацію натискання
+        btn.classList.add('pulse');
+        setTimeout(() => btn.classList.remove('pulse'), 350);
+    }
+
     updateMainButton();
 }
+
 
 function removeFromCart(productId) {
     if (cart[productId]) {
@@ -341,27 +347,31 @@ async function submitOrder(clientDetails) {
 
 // Керує видимістю екранів
 function showScreen(screenName) {
-    appContainer.classList.add('hidden');
-    orderFormContainer.classList.add('hidden');
-    profileConfirmContainer.classList.add('hidden');
-    tg.MainButton.hide();
+    const screens = [appContainer, orderFormContainer, profileConfirmContainer];
+    screens.forEach(el => el.classList.add('hidden'));
 
-    if (screenName === 'none') {
-        return; // Просто все ховаємо
-    } else if (screenName === 'app') {
-        appContainer.classList.remove('hidden');
-        updateMainButton(); // Головна кнопка керується в 'app'
-    } else if (screenName === 'order') {
-        orderFormContainer.classList.remove('hidden');
-    } else if (screenName === 'profile') {
-        profileConfirmContainer.classList.remove('hidden');
-    }
+    // Знаходимо цільовий контейнер
+    let target = null;
+    if (screenName === 'app') target = appContainer;
+    else if (screenName === 'order') target = orderFormContainer;
+    else if (screenName === 'profile') target = profileConfirmContainer;
+
+    if (!target) return; // Якщо none — все ховаємо
+
+    // Додаємо анімацію входу
+    target.classList.remove('hidden');
+    target.classList.add('route-enter');
+
+    // Трохи пізніше — активуємо її
+    requestAnimationFrame(() => {
+        target.classList.add('route-enter-active');
+        setTimeout(() => {
+            target.classList.remove('route-enter', 'route-enter-active');
+        }, 400);
+    });
+
+    // Головну кнопку ховаємо лише коли це не cart/order
+    if (screenName !== 'none') tg.MainButton.hide();
 }
 
-function showLoader() {
-    appContainer.innerHTML = '<div class="loader">Завантаження...</div>';
-}
 
-function showError(message) {
-    appContainer.innerHTML = `<div class="error">${message}</div>`;
-}
