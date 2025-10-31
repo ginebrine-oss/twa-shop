@@ -352,9 +352,8 @@ function showScreen(screenName) {
     profileConfirmContainer.classList.add('hidden');
     tg.MainButton.hide();
 
-    if (screenName === 'app') {
-        appContainer.classList.remove('hidden');
-        updateMainButton(); // Головна кнопка керується в 'app'
+    if (screenName === 'none') { // <-- ДОДАЙТЕ ЦЕЙ РЯДОК
+        return; // Просто все ховаємо
     } else if (screenName === 'order') {
         orderFormContainer.classList.remove('hidden');
     } else if (screenName === 'profile') {
@@ -369,4 +368,5 @@ function showLoader() {
 function showError(message) {
     appContainer.innerHTML = `<div class="error">${message}</div>`;
 }
+
 
