@@ -319,7 +319,6 @@ backToCartBtn.onclick = () => {
     updateMainButton();
 };
 
-// Крок 4: Фінальна відправка замовлення (спільна для обох гілок)
 async function submitOrder(clientDetails) {
     let totalPrice = 0;
     for (const productId in cart) {
@@ -333,44 +332,18 @@ async function submitOrder(clientDetails) {
     const orderData = {
         cart: cart,
         client_details: clientDetails,
-        total_price: totalPrice
+        total_price: totalPrice // Бот все одно це перерахує, але це ОК
     };
 
-    try {
-        // 1. Готуємо Головну Кнопку до відправки
-        tg.MainButton.setText("Обробка...");
-        tg.MainButton.showProgress(true);
-        tg.MainButton.disable();
-
-        // 2. **ГОЛОВНИЙ КРОК: Відправка даних боту**
-        tg.sendData(JSON.stringify(orderData));
-
-        // 3. **НАДАЄМО ВІДГУК КОРИСТУВАЧУ ТУТ**
-        showScreen('none'); 
-        
-        appContainer.classList.remove('hidden');
-        appContainer.innerHTML = `
-            <h2>✅ Дякуємо!</h2>
-            <p>Ваше замовлення успішно надіслано в обробку.</p>
-            <p>Ви отримаєте підтвердження від бота в чаті за мить.</p>
-            <p>Ви можете закрити цей екран.</p>
-        `;
-
-        // 4. Повідомляємо Telegram, що все добре
-        tg.HapticFeedback.notificationOccurred('success');
-        
-        // Через 3 секунди можна закрити TWA
-        setTimeout(() => tg.close(), 3000);
-
-    } catch (error) {
-        console.error("Помилка відправки замовлення: ", error);
-        tg.showAlert("Сталася помилка. Спробуйте ще раз.");
-        
-        // Повертаємо кнопку в робочий стан
-        tg.MainButton.setText("Помилка! Спробувати ще раз");
-        tg.MainButton.hideProgress(false);
-        tg.MainButton.enable();
-    }
+    // **ГОЛОВНИЙ КРОК: Відправка даних боту**
+    // Telegram сам закриє додаток після цього виклику.
+    // Повідомлення про успіх ("Дякуємо!") надішле ваш Python-бот
+    // у звичайний чат з користувачем.
+    tg.sendData(JSON.stringify(orderData));
+    
+    // !!! ВЕСЬ ІНШИЙ КОД (try/catch, MainButton.setText,
+    // showScreen('none'), innerHTML, setTimeout, tg.close())
+    // ПОТРІБНО ЗВІДСИ ВИДАЛИТИ !!!
 }
 
 // --- 6. ДОПОМІЖНІ ФУНКЦІЇ ---
@@ -408,6 +381,7 @@ function showLoader() {
         <div class="loader fade-in">⏳ Завантаження...</div>
     `;
 }
+
 
 
 
