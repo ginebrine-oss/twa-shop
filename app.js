@@ -330,26 +330,35 @@ async function submitOrder(clientDetails) {
         }
     }
     
+    // --- ВИПРАВЛЕННЯ: Видаляємо поле 'telegram_id', якщо воно є ---
+    if (clientDetails.hasOwnProperty('telegram_id')) {
+        delete clientDetails.telegram_id;
+    }
+    // --- КІНЕЦЬ ВИПРАВЛЕННЯ ---
+
     const orderData = {
         cart: cart,
-        client_details: clientDetails,
+        client_details: clientDetails, // Тепер тут немає 'telegram_id'
         total_price: totalPrice
     };
 
-    // --- ПОЧАТОК ВИПРАВЛЕННЯ ---
+    const dataString = JSON.stringify(orderData);
+
+    // --- ДІАГНОСТИКА: Покажемо, що саме ми надсилаємо ---
+    tg.showAlert(`[DEBUG] Надсилаю дані: ${dataString.substring(0, 250)}`);
+
     try {
         // **ГОЛОВНИЙ КРОК: Відправка даних боту**
-        // Telegram сам закриє додаток після цього виклику.
-        tg.sendData(JSON.stringify(orderData));
+        tg.sendData(dataString);
         
-        // Ми НЕ показуємо "Дякуємо" тут. Бот надішле це в чат.
+        // Якщо цей код виконається, значить sendData не закрила додаток
+        tg.showAlert("[DEBUG] Помилка: sendData() була викликана, але не закрила додаток.");
 
     } catch (error) {
-        // Якщо tg.sendData() згенерує помилку, ми її побачимо
+        // Якщо sendData згенерувала помилку
         console.error("Помилка відправки замовлення: ", error);
-        tg.showAlert("Сталася помилка. Спробуйте ще раз. " + error);
+        tg.showAlert(`[DEBUG] Помилка catch: ${error}`);
     }
-    // --- КІНЕЦЬ ВИПРАВЛЕННЯ ---
 }
 
 // --- 6. ДОПОМІЖНІ ФУНКЦІЇ ---
@@ -387,6 +396,7 @@ function showLoader() {
         <div class="loader fade-in">⏳ Завантаження...</div>
     `;
 }
+
 
 
 
