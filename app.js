@@ -319,6 +319,7 @@ backToCartBtn.onclick = () => {
     updateMainButton();
 };
 
+// Крок 4: Фінальна відправка замовлення (спільна для обох гілок)
 async function submitOrder(clientDetails) {
     let totalPrice = 0;
     for (const productId in cart) {
@@ -332,18 +333,23 @@ async function submitOrder(clientDetails) {
     const orderData = {
         cart: cart,
         client_details: clientDetails,
-        total_price: totalPrice // Бот все одно це перерахує, але це ОК
+        total_price: totalPrice
     };
 
-    // **ГОЛОВНИЙ КРОК: Відправка даних боту**
-    // Telegram сам закриє додаток після цього виклику.
-    // Повідомлення про успіх ("Дякуємо!") надішле ваш Python-бот
-    // у звичайний чат з користувачем.
-    tg.sendData(JSON.stringify(orderData));
-    
-    // !!! ВЕСЬ ІНШИЙ КОД (try/catch, MainButton.setText,
-    // showScreen('none'), innerHTML, setTimeout, tg.close())
-    // ПОТРІБНО ЗВІДСИ ВИДАЛИТИ !!!
+    // --- ПОЧАТОК ВИПРАВЛЕННЯ ---
+    try {
+        // **ГОЛОВНИЙ КРОК: Відправка даних боту**
+        // Telegram сам закриє додаток після цього виклику.
+        tg.sendData(JSON.stringify(orderData));
+        
+        // Ми НЕ показуємо "Дякуємо" тут. Бот надішле це в чат.
+
+    } catch (error) {
+        // Якщо tg.sendData() згенерує помилку, ми її побачимо
+        console.error("Помилка відправки замовлення: ", error);
+        tg.showAlert("Сталася помилка. Спробуйте ще раз. " + error);
+    }
+    // --- КІНЕЦЬ ВИПРАВЛЕННЯ ---
 }
 
 // --- 6. ДОПОМІЖНІ ФУНКЦІЇ ---
@@ -381,6 +387,7 @@ function showLoader() {
         <div class="loader fade-in">⏳ Завантаження...</div>
     `;
 }
+
 
 
 
